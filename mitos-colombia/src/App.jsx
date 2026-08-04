@@ -1,0 +1,1 @@
+export default function App() { return ( <div style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', }} > <h1>Mitos de Colombia</h1> </div> ) }
