@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import Mapa3D from './Mapa3D'
 
 const mitos = {
   Caribe: [
@@ -101,38 +102,8 @@ export default function App() {
   }
 
   if (pantalla === 'mapa') {
-    return (
-      <div style={styles.mapa}>
-        <h1 style={{ fontSize: 42 }}>Selecciona una región</h1>
-
-        <svg width="340" height="520" viewBox="0 0 340 520">
-          <rect x="120" y="20" width="100" height="70" rx="14"
-            fill="#26324f" onClick={() => abrirRegion('Caribe')}
-            style={{ cursor: 'pointer' }} />
-
-          <rect x="70" y="100" width="80" height="120" rx="14"
-            fill="#26324f" onClick={() => abrirRegion('Pacífica')}
-            style={{ cursor: 'pointer' }} />
-
-          <rect x="155" y="100" width="90" height="160" rx="14"
-            fill="#26324f" onClick={() => abrirRegion('Andina')}
-            style={{ cursor: 'pointer' }} />
-
-          <rect x="250" y="120" width="70" height="130" rx="14"
-            fill="#26324f" onClick={() => abrirRegion('Orinoquía')}
-            style={{ cursor: 'pointer' }} />
-
-          <rect x="120" y="280" width="110" height="170" rx="18"
-            fill="#26324f" onClick={() => abrirRegion('Amazonía')}
-            style={{ cursor: 'pointer' }} />
-
-          <circle cx="290" cy="70" r="22"
-            fill="#26324f" onClick={() => abrirRegion('Insular')}
-            style={{ cursor: 'pointer' }} />
-        </svg>
-      </div>
-    )
-  }
+  return <Mapa3D />
+}
 
   return (
     <div style={{ height: '350vh', background: '#050816' }}>
