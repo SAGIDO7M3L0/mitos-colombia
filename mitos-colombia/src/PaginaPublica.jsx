@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useMitos } from './hooks/useMitos'
-import { useAuth } from './context/AuthContext'
+import Mapa3D from './Mapa3D'
 
 export default function PaginaPublica() {
   const { mitosPorRegion, cargando } = useMitos()
@@ -16,9 +15,7 @@ export default function PaginaPublica() {
       scrollRef.current?.scrollTo({ left: window.innerWidth, behavior: 'smooth' })
     }, 0)
   }
-
-  const mitosRegionActual = regionSeleccionada ? mitosPorRegion[regionSeleccionada] || [] : []
-  const anchoLista = Math.max(mitosRegionActual.length * 400, window.innerWidth)
+  
 
   if (cargando) {
     return <div style={styles.cargando}>Cargando mitos y leyendas...</div>
@@ -28,82 +25,83 @@ export default function PaginaPublica() {
     <div ref={scrollRef} style={styles.scrollContainer}>
       {/* Sección 1: mapa — TEMPORAL, se reemplaza por Mapa3D.jsx */}
       <section style={styles.seccionMapa}>
-        <h1 style={{ fontSize: 42 }}>Selecciona una región</h1>
-        <svg width="340" height="520" viewBox="0 0 340 520">
-          <rect x="120" y="20" width="100" height="70" rx="14" fill="#26324f"
-            onClick={() => seleccionarRegion('Caribe')} style={{ cursor: 'pointer' }} />
-          <rect x="70" y="100" width="80" height="120" rx="14" fill="#26324f"
-            onClick={() => seleccionarRegion('Pacífica')} style={{ cursor: 'pointer' }} />
-          <rect x="155" y="100" width="90" height="160" rx="14" fill="#26324f"
-            onClick={() => seleccionarRegion('Andina')} style={{ cursor: 'pointer' }} />
-          <rect x="250" y="120" width="70" height="130" rx="14" fill="#26324f"
-            onClick={() => seleccionarRegion('Orinoquía')} style={{ cursor: 'pointer' }} />
-          <rect x="120" y="280" width="110" height="170" rx="18" fill="#26324f"
-            onClick={() => seleccionarRegion('Amazonía')} style={{ cursor: 'pointer' }} />
-          <circle cx="290" cy="70" r="22" fill="#26324f"
-            onClick={() => seleccionarRegion('Insular')} style={{ cursor: 'pointer' }} />
-        </svg>
+        <Mapa3D onRegionSelect={seleccionarRegion} />
       </section>
 
       {/* Sección 2: lista de mitos de la región seleccionada */}
-      <section style={{ ...styles.seccionLista, width: anchoLista }}>
-        {!regionSeleccionada ? (
-          <p style={styles.placeholder}>Selecciona una región en el mapa para ver sus mitos.</p>
-        ) : (
-          <>
-            <h1 style={{ margin: '0 0 40px' }}>{regionSeleccionada}</h1>
-            <div style={styles.cards}>
-              {mitosRegionActual.map((mito) => (
-                <div key={mito.id} style={styles.card} onClick={() => setMitoSeleccionado(mito)}>
-                  <h2 style={styles.cardTitulo}>{mito.titulo}</h2>
-                  <p style={styles.cardTexto}>{mito.resumen}</p>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-      </section>
+      <section style={styles.seccionLista}>
+  {!regionSeleccionada ? (
+    <>
+      <h1 style={styles.tituloRegiones}>Regiones de Colombia</h1>
 
-      {/* Sección 3: login de admin, siempre visible */}
-      <section style={styles.seccionLogin}>
-        <LoginAdmin />
-      </section>
+      <div style={styles.regionesScroll}>
+        {[
+          'Caribe',
+          'Pacífica',
+          'Andina',
+          'Orinoquía',
+          'Amazonía',
+          'Insular',
+        ].map((region) => (
+          <button
+            key={region}
+            style={styles.botonRegion}
+            onClick={() => seleccionarRegion(region)}
+          >
+            {region}
+          </button>
+        ))}
+      </div>
+    </>
+  ) : (
+    <div style={styles.contenidoRegion}>
+      <button
+        style={styles.botonVolver}
+        onClick={() => setRegionSeleccionada(null)}
+      >
+        ← Regiones
+      </button>
+
+      <h1 style={styles.tituloRegion}>{regionSeleccionada}</h1>
+
+      <div style={styles.contenedorMitos}>
+        <div style={styles.tablaMitos}>
+          <h2>Mitos y leyendas</h2>
+
+          {mitosPorRegion[regionSeleccionada]?.map((mito) => (
+            <div
+              key={mito.id}
+              style={styles.filaMito}
+              onClick={() => setMitoSeleccionado(mito)}
+            >
+              <strong>{mito.titulo}</strong>
+              <span>{mito.resumen}</span>
+            </div>
+          ))}
+
+          {(!mitosPorRegion[regionSeleccionada] ||
+            mitosPorRegion[regionSeleccionada].length === 0) && (
+            <p style={styles.sinMitos}>
+              No hay mitos registrados para esta región.
+            </p>
+          )}
+        </div>
+
+        <div style={styles.videoContainer}>
+          <div style={styles.videoPlaceholder}>
+            <span>VIDEO</span>
+            <p>Espacio para la animación del mito</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
+</section>
 
       {mitoSeleccionado && (
         <PanelDetalle mito={mitoSeleccionado} onCerrar={() => setMitoSeleccionado(null)} />
       )}
     </div>
-  )
-}
-
-function LoginAdmin() {
-  const { signIn } = useAuth()
-  const navigate = useNavigate()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-
-  const manejarSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    const { error } = await signIn(email, password)
-    if (error) {
-      setError('Correo o contraseña incorrectos')
-      return
-    }
-    navigate('/admin')
-  }
-
-  return (
-    <form onSubmit={manejarSubmit} style={styles.loginForm}>
-      <h1 style={{ marginBottom: 24 }}>Acceso administrador</h1>
-      <input type="email" placeholder="Correo" value={email}
-        onChange={(e) => setEmail(e.target.value)} style={styles.input} required />
-      <input type="password" placeholder="Contraseña" value={password}
-        onChange={(e) => setPassword(e.target.value)} style={styles.input} required />
-      {error && <p style={{ color: '#f87171' }}>{error}</p>}
-      <button type="submit" style={styles.boton}>Iniciar sesión</button>
-    </form>
   )
 }
 
@@ -136,6 +134,82 @@ function PanelDetalle({ mito, onCerrar }) {
 }
 
 const styles = {
+  contenidoRegion: {
+  width: '100%',
+  maxWidth: 1400,
+},
+
+botonVolver: {
+  background: 'transparent',
+  border: 'none',
+  color: '#94a3b8',
+  fontSize: 16,
+  cursor: 'pointer',
+  marginBottom: 20,
+},
+
+tituloRegion: {
+  fontSize: 48,
+  margin: '0 0 40px',
+},
+
+contenedorMitos: {
+  display: 'flex',
+  gap: 40,
+  width: '100%',
+},
+
+tablaMitos: {
+  flex: 1,
+  maxHeight: 500,
+  overflowY: 'auto',
+},
+
+filaMito: {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 8,
+  padding: 20,
+  marginBottom: 12,
+  background: '#111827',
+  border: '1px solid #334155',
+  borderRadius: 16,
+  cursor: 'pointer',
+},
+
+sinMitos: {
+  color: '#94a3b8',
+},
+
+videoContainer: {
+  flex: 1,
+},
+
+videoPlaceholder: {
+  width: '100%',
+  aspectRatio: '16 / 9',
+  background: '#111827',
+  border: '1px solid #334155',
+  borderRadius: 24,
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: '#64748b',
+},
+
+botonRegion: {
+  flexShrink: 0,
+  width: 260,
+  height: 160,
+  borderRadius: 24,
+  border: '1px solid #334155',
+  background: '#111827',
+  color: 'white',
+  fontSize: 24,
+  fontWeight: 600,
+  cursor: 'pointer',
+},
   cargando: {
     minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
     background: '#050816', color: 'white', fontFamily: 'Inter, sans-serif',
@@ -150,30 +224,43 @@ const styles = {
     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24,
   },
   seccionLista: {
-    minWidth: '100vw', height: '100vh', scrollSnapAlign: 'start',
-    display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 80px',
-  },
-  placeholder: { color: '#94a3b8', fontSize: 20 },
-  cards: { display: 'flex', gap: 24, overflowX: 'hidden' },
-  card: {
-    width: 360, background: '#111827', border: '1px solid #334155', borderRadius: 24,
-    padding: 28, cursor: 'pointer', flexShrink: 0,
-  },
+  minWidth: '100vw',
+  height: '100vh',
+  scrollSnapAlign: 'start',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center',
+  padding: '0 80px',
+  boxSizing: 'border-box',
+},
+
+tituloRegiones: {
+  fontSize: 48,
+  margin: '0 0 50px',
+},
+
+regionesScroll: {
+  display: 'flex',
+  gap: 24,
+  overflowX: 'auto',
+  paddingBottom: 20,
+},
+
+botonRegion: {
+  flexShrink: 0,
+  width: 260,
+  height: 160,
+  borderRadius: 24,
+  border: '1px solid #334155',
+  background: '#111827',
+  color: 'white',
+  fontSize: 24,
+  fontWeight: 600,
+  cursor: 'pointer',
+},
   cardTitulo: { fontSize: 24, margin: '0 0 12px' },
   cardTexto: { color: '#cbd5e1', lineHeight: 1.6 },
-  seccionLogin: {
-    minWidth: '100vw', height: '100vh', scrollSnapAlign: 'start',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-  },
-  loginForm: { display: 'flex', flexDirection: 'column', width: 320 },
-  input: {
-    padding: '14px 16px', marginBottom: 16, borderRadius: 12,
-    border: '1px solid #334155', background: '#111827', color: 'white', fontSize: 16,
-  },
-  boton: {
-    padding: '14px 16px', borderRadius: 12, border: 'none',
-    background: 'white', color: '#0b1020', fontWeight: 700, cursor: 'pointer',
-  },
+  
 }
 
 const panelStyles = {

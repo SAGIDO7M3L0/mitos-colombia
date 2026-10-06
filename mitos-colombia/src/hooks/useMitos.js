@@ -1,29 +1,46 @@
 import { useEffect, useState } from 'react'
-import { supabase } from "../lib/supabaseClient";
+import { obtenerMitos } from '../services/mitosService'
 
 export function useMitos() {
+  const [mitos, setMitos] = useState([])
   const [mitosPorRegion, setMitosPorRegion] = useState({})
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    async function cargar() {
-      const { data, error } = await supabase.from('mitos_leyendas').select('*')
-      if (error) {
+    async function cargarMitos() {
+      try {
+        const data = await obtenerMitos()
+
+        console.log('Mitos desde Supabase:', data)
+
+        setMitos(data)
+
+        const agrupados = {}
+
+        for (const mito of data) {
+          if (!agrupados[mito.region]) {
+            agrupados[mito.region] = []
+          }
+
+          agrupados[mito.region].push(mito)
+        }
+
+        setMitosPorRegion(agrupados)
+      } catch (error) {
         setError(error.message)
+      } finally {
         setCargando(false)
-        return
       }
-      const agrupado = {}
-      for (const mito of data) {
-        if (!agrupado[mito.region]) agrupado[mito.region] = []
-        agrupado[mito.region].push(mito)
-      }
-      setMitosPorRegion(agrupado)
-      setCargando(false)
     }
-    cargar()
+
+    cargarMitos()
   }, [])
 
-  return { mitosPorRegion, cargando, error }
+  return {
+    mitos,
+    mitosPorRegion,
+    cargando,
+    error,
+  }
 }
